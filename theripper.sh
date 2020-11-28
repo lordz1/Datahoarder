@@ -11,8 +11,8 @@ set -e
 URL=$1
 ROOT_PATH=$2
 LIST=./list-$$.txt
-MAX_CONNECTIONS_PER_SERVER=16
-USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36"
+MAX_CONNECTIONS_PER_SERVER=10
+USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.47"
 
 usage() {
 	cat <<EOF
@@ -24,7 +24,7 @@ EOF
 
 spider() {
 	local logfile=./opendir-$$.log
-	wget -o $logfile -e robots=off -r --no-parent --spider -U "$USER_AGENT" "$URL" || true
+	wget -o $logfile -e robots=off -r --no-parent --reject="*.htm*,*.aria2,*.lnk,*.torrent,index.html*" --spider -U "$USER_AGENT" "$URL" || true
 	#Grabs all lines with the pattern --2017-07-12 15:40:31-- then from the results removes everthing that ends in / (meaning it's a directory
 	#then removes pattern from every line
 	grep -B 2 -E '... 404 Not Found|... 403 Forbidden|... 301 Moved Permanently' $logfile | \
@@ -57,7 +57,7 @@ download() {
 		echo -e " min-split-size=1M\n" >> link-$$.down
 	done  < $LIST
 	#Download links
-	aria2c -i link-$$.down -j 10
+	aria2c -i link-$$.down -j 3 -s 10 --file-allocation=none --continue=true
 
 }
 
